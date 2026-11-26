@@ -32,7 +32,7 @@ func command(root string, env []string, name string, args ...string) error {
 }
 func stage(root, target string) error {
 	files := []string{
-		"README.md", "LICENSE", "CONTRIBUTING.md", "SECURITY.md", ".env.example", ".gitignore", "go.mod", "go.sum",
+		"README.md", "LICENSE", "CONTRIBUTING.md", "SECURITY.md", ".env.example", ".gitignore", ".gitattributes", "go.mod", "go.sum",
 		"desktop/go.mod", "desktop/go.sum", "desktop/mygo.json", "desktop/logo.svg", "desktop/logo.png",
 	}
 	for _, dir := range []string{"cmd", "internal", "desktop", "scheduler", "docs", ".github"} {

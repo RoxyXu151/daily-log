@@ -122,6 +122,7 @@ func TestRegisteredSourceUsesSharedSettingsAndActivityFlow(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	data = bytes.ReplaceAll(data, []byte("\r\n"), []byte("\n"))
 	data = bytes.Replace(data,
 		[]byte("ai:\n  enabled: false\n  base_url: https://api.deepseek.com\n  model: deepseek-flash"),
 		[]byte("ai:\n  enabled: true\n  base_url: "+ai.URL+"/v1\n  model: test-model"), 1)

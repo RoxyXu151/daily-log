@@ -505,6 +505,7 @@ func (l LocalFolder) Collect(_ context.Context, window Window) (Batch, error) {
 			break
 		}
 		rel, _ := filepath.Rel(l.Root, file.path)
+		rel = filepath.ToSlash(rel)
 		title := fmt.Sprintf("编辑笔记 %s", strings.TrimSuffix(rel, filepath.Ext(rel)))
 		event := model.NewEvent(model.StableID(l.Name, rel, fmt.Sprint(file.at.Unix())), strings.ToLower(l.Name), rel, "note_edit", title, file.at)
 		event.URL = "file://" + file.path
