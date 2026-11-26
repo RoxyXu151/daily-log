@@ -1,0 +1,8 @@
+blank_issues_enabled: true
+contact_links:
+  - name: 在线展示与文档概览
+    url: https://roxyxu151.github.io/daily-log/
+    about: 查看功能导览、界面预览与快速开始说明
+  - name: 私密安全漏洞报告
+    url: https://github.com/RoxyXu151/daily-log/security/advisories/new
+    about: 请勿在公开 Issue 中提交凭证泄漏或鉴权相关漏洞

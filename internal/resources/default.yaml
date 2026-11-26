@@ -1,0 +1,37 @@
+timezone: Asia/Shanghai
+database: data/daily-log.sqlite3
+log_file: logs/daily-log.log
+lookback_days: 3
+zotero:
+  enabled: false
+  base_url: http://localhost:23119/api
+  library: users/0
+  session_gap_minutes: 30
+todoist:
+  enabled: false
+calendar:
+  enabled: false
+codex:
+  enabled: false
+  required: false
+  use_ai: false
+  cache_directory: data/codex-cache
+  hosts:
+    - name: local
+      command: [codex, app-server, --listen, 'stdio://']
+  # First matching regex wins. Scope rules are configured locally.
+  category_rules: []
+  category_overrides: {}
+sheets:
+  enabled: false
+  spreadsheet_id: ''
+excel:
+  enabled: false
+  path: outputs/local/个人活动日志.xlsx
+markdown:
+  enabled: true
+  directory: outputs/markdown
+ai:
+  enabled: false
+  base_url: https://api.deepseek.com
+  model: deepseek-flash

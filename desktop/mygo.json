@@ -1,0 +1,7 @@
+{
+  "name": "Daily Log",
+  "identifier": "io.daily-log.desktop",
+  "version": "0.3.0",
+  "icon": "logo.png",
+  "out": "../dist/desktop"
+}

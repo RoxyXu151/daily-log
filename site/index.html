@@ -1,0 +1,739 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="light" data-accent="default">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>daily-log · 个人 AI 日志工作台</title>
+  <meta name="description" content="把 Zotero 阅读标注、Todoist 完成任务、Codex 对话、代码提交与本地笔记整理成证据可追溯的三时段日记。纯 Go 单体架构，本地 SQLite 存储，支持 Linux / Windows 原生桌面与 Android 安全连接，MIT 开源。">
+  <meta property="og:title" content="daily-log · 个人 AI 日志工作台">
+  <meta property="og:description" content="把散落一天的真实活动证据，凝练成值得回看的三时段日记。本地优先 · 证据可追溯 · 三端一致 · MIT 开源。">
+  <meta property="og:type" content="website">
+  <meta property="og:image" content="./assets/light-dashboard-wide.png">
+  <link rel="icon" type="image/svg+xml" href="./assets/logo.svg">
+  <link rel="stylesheet" href="./styles.css">
+  <script>
+    (() => {
+      const t = localStorage.getItem("daily-log-site-theme") ||
+        (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+      const a = localStorage.getItem("daily-log-site-accent") || "default";
+      document.documentElement.setAttribute("data-theme", t);
+      document.documentElement.setAttribute("data-accent", a);
+    })();
+  </script>
+</head>
+<body>
+
+  <!-- Floating Toast Band (faithful to desktop toastBand) -->
+  <div id="toast-band" class="toast-band" role="status" aria-live="polite">
+    <span class="toast-dot"></span>
+    <span id="toast-text">已就绪</span>
+  </div>
+
+  <!-- Sticky Navigation Header -->
+  <header class="site-header">
+    <div class="container nav-bar">
+      <a class="brand" href="#top">
+        <img src="./assets/logo.svg" alt="daily-log 图标" width="28" height="28">
+        <span class="brand-name">daily-log</span>
+        <span class="brand-version tnum">v0.3.0</span>
+      </a>
+
+      <nav class="nav-links" aria-label="主导航">
+        <a href="#showcase">工作台预览</a>
+        <a href="#pipeline">证据与保护</a>
+        <a href="#ecosystem">连接生态</a>
+        <a href="#platforms">三端协同</a>
+        <a href="#design">设计体系</a>
+        <a href="#quickstart">快速开始</a>
+      </nav>
+
+      <div class="nav-controls">
+        <div class="accent-picker" role="group" aria-label="切换房间色温强调色">
+          <button type="button" class="accent-dot" data-set-accent="default" title="默认暖调" aria-label="默认暖调" aria-pressed="true" style="background:#d94235"></button>
+          <button type="button" class="accent-dot" data-set-accent="seablue" title="海蓝" aria-label="海蓝" aria-pressed="false" style="background:#3569c6"></button>
+          <button type="button" class="accent-dot" data-set-accent="teal" title="青绿" aria-label="青绿" aria-pressed="false" style="background:#176952"></button>
+          <button type="button" class="accent-dot" data-set-accent="violet" title="紫罗兰" aria-label="紫罗兰" aria-pressed="false" style="background:#783992"></button>
+        </div>
+
+        <button type="button" id="theme-toggle" class="theme-toggle" aria-label="切换浅色或深色外观">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>
+          <span id="theme-label">浅色</span>
+        </button>
+
+        <a class="repo-pill" href="https://github.com/RoxyXu151/daily-log" target="_blank" rel="noopener noreferrer">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 .5C5.65.5.5 5.65.5 12c0 5.09 3.29 9.4 7.86 10.93.58.1.79-.25.79-.56v-2.02c-3.2.7-3.87-1.39-3.87-1.39-.52-1.33-1.28-1.68-1.28-1.68-1.05-.71.08-.7.08-.7 1.16.08 1.77 1.19 1.77 1.19 1.03 1.76 2.7 1.25 3.36.96.1-.75.4-1.25.73-1.54-2.55-.29-5.24-1.28-5.24-5.68 0-1.26.45-2.28 1.19-3.09-.12-.29-.52-1.46.11-3.05 0 0 .97-.31 3.18 1.18a11.1 11.1 0 0 1 5.8 0c2.2-1.49 3.17-1.18 3.17-1.18.63 1.59.23 2.76.12 3.05.74.81 1.18 1.83 1.18 3.09 0 4.41-2.69 5.38-5.26 5.67.42.36.78 1.06.78 2.14v3.17c0 .31.21.67.8.56A11.51 11.51 0 0 0 23.5 12C23.5 5.65 18.35.5 12 .5Z"/></svg>
+          <span>GitHub</span>
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <main id="top">
+
+    <!-- ======================================================================
+         Hero & Interactive Day Ribbon
+         ====================================================================== -->
+    <section class="hero">
+      <div class="container">
+        <div class="hero-top">
+          <div class="hero-badges">
+            <span class="status-pill accent"><span class="dot"></span>纯 Go 单可执行文件</span>
+            <span class="status-pill good"><span class="dot"></span>SQLite 本地优先 · MIT 开源</span>
+            <span class="status-pill">Linux · Windows · Android 浏览器</span>
+          </div>
+
+          <h1>把散落一天的真实证据，<br>整理成<span class="accent-word">值得回看的日记</span>。</h1>
+
+          <p class="hero-lead">
+            <code>daily-log</code> 自动采集 Zotero 阅读标注、Todoist 完成记录、Codex 编码讨论、代码仓库提交与本地笔记活动，由 AI 合并提炼为上午、下午、晚上三个时段的高价值事项。每条事项都锚定原始证据，缺少可靠起止记录时保持用时未知，绝不凭空臆造。
+          </p>
+
+          <div class="hero-actions">
+            <a class="pill-btn primary" href="#quickstart">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m8 5 11 7-11 7z"/></svg>
+              30 秒快速体验
+            </a>
+            <a class="pill-btn" href="https://github.com/RoxyXu151/daily-log" target="_blank" rel="noopener noreferrer">
+              查看源码仓库
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m13 6 6 6-6 6"/></svg>
+            </a>
+            <a class="pill-btn" href="#showcase">浏览原生工作台</a>
+          </div>
+        </div>
+
+        <!-- Interactive Day Ribbon Card (faithful to desktop screen.go Today card) -->
+        <div class="surface-card today-workbench" aria-label="交互式全天证据时间轴演示">
+          <div class="today-top-grid">
+            <div class="today-date-col">
+              <span class="today-label">今日日记 · 实时证据归并演示</span>
+              <div class="today-hero-date tnum">2026-11-24</div>
+              <div class="today-meta tnum">周三 · 4 件高价值事项 · 30 条原始证据 · 北京时间 23:00 自动归档</div>
+            </div>
+
+            <div class="tile-box metric-tile">
+              <span class="m-label">今日事项</span>
+              <span class="m-value tnum">4</span>
+              <span class="m-hint">AI 归纳的有效工作</span>
+            </div>
+            <div class="tile-box metric-tile">
+              <span class="m-label">原始证据</span>
+              <span class="m-value tnum">30</span>
+              <span class="m-hint">可下钻追溯的来源记录</span>
+            </div>
+            <div class="tile-box metric-tile">
+              <span class="m-label">完成任务</span>
+              <span class="m-value tnum">4</span>
+              <span class="m-hint">含明确完成证据事项</span>
+            </div>
+            <div class="tile-box metric-tile">
+              <span class="m-label">内置来源</span>
+              <span class="m-value tnum">10</span>
+              <span class="m-hint">默认全关 · 按需本地启用</span>
+            </div>
+          </div>
+
+          <div class="ribbon-divider"></div>
+
+          <div class="ribbon-head">
+            <span><strong>dayRibbon 全天时间带</strong>：每段宽度严格对应真实起止证据，间隙即留白；悬停或点击任意时段查看「原始证据 → 日记事项」提炼过程：</span>
+            <span class="status-pill good"><span class="dot"></span>证据校验通过</span>
+          </div>
+
+          <div class="ribbon-row">
+            <span class="ribbon-clock tnum">09:00</span>
+            <div class="day-ribbon-track" role="tablist" aria-label="全天事项时间段">
+              <button type="button" class="ribbon-seg" role="tab" data-topic-id="t1" aria-selected="true" aria-label="09:00 至 10:40 整理论文第三章论证结构" style="left:0%;width:13.6%;background:var(--cat-research)"></button>
+              <button type="button" class="ribbon-seg" role="tab" data-topic-id="t2" aria-selected="false" aria-label="13:30 至 15:10 一致性哈希分片模拟" style="left:36.7%;width:13.6%;background:var(--cat-course)"></button>
+              <button type="button" class="ribbon-seg" role="tab" data-topic-id="t3" aria-selected="false" aria-label="15:30 至 16:20 简历项目描述量化改写" style="left:53.1%;width:7.2%;background:var(--cat-career)"></button>
+              <button type="button" class="ribbon-seg" role="tab" data-topic-id="t4" aria-selected="false" aria-label="20:00 至 21:15 组会周报与下周实验排期" style="left:89.5%;width:10.5%;background:var(--cat-research)"></button>
+            </div>
+            <span class="ribbon-clock tnum">21:15</span>
+          </div>
+
+          <div class="ribbon-pills" role="tablist" aria-label="切换示例事项">
+            <button type="button" class="topic-chip" data-topic-id="t1" aria-selected="true">
+              <span class="cat-dot" style="background:var(--cat-research)"></span>上午 · 整理论文第三章论证结构
+            </button>
+            <button type="button" class="topic-chip" data-topic-id="t2" aria-selected="false">
+              <span class="cat-dot" style="background:var(--cat-course)"></span>下午 · 一致性哈希分片模拟
+            </button>
+            <button type="button" class="topic-chip" data-topic-id="t3" aria-selected="false">
+              <span class="cat-dot" style="background:var(--cat-career)"></span>下午 · 简历项目描述量化改写
+            </button>
+            <button type="button" class="topic-chip" data-topic-id="t4" aria-selected="false">
+              <span class="cat-dot" style="background:var(--cat-research)"></span>晚上 · 组会周报与下周实验排期
+            </button>
+          </div>
+
+          <div class="sunken-well ribbon-inspector">
+            <div class="inspector-col">
+              <h4>输入：多来源脱敏证据批次（SQLite events）</h4>
+              <div id="ins-evidence" class="evidence-list"></div>
+            </div>
+            <div class="inspector-col">
+              <h4>输出：AI 归纳高价值事项（≤28 字标题 + 可核验摘要）</h4>
+              <div class="distilled-card">
+                <div>
+                  <div class="distilled-head">
+                    <span id="ins-period" class="tnum" style="font-size:12px;color:var(--muted);font-weight:600">上午 · 09:00–10:40</span>
+                    <span id="ins-cat" class="status-pill"><span class="dot" style="background:var(--cat-research)"></span>科研</span>
+                  </div>
+                  <div id="ins-title" class="distilled-title" style="margin-top:8px">整理论文第三章论证结构</div>
+                  <p id="ins-summary" class="distilled-summary" style="margin-top:6px">定下反例与数据来源的对应关系，改写两段核心推导，并留下一条待实验验证的边界假设。</p>
+                </div>
+                <div class="distilled-foot">
+                  <span id="ins-rule">合并 3 轮 Codex 对话与 Zotero 论文标注 · 保留起止证据</span>
+                  <code id="ins-count" class="tnum">11 / 28 字</code>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ======================================================================
+         Native Workbench Interactive Screenshot Stage
+         ====================================================================== -->
+    <section id="showcase" class="page-section">
+      <div class="container">
+        <div class="section-header">
+          <div>
+            <div class="eyebrow">NATIVE WORKBENCH</div>
+            <h2>基于 MyGo 的跨平台原生工作台</h2>
+            <p>无需臃肿的 Electron 运行时。桌面端使用纯 Go 编写的 MyGo 原生 UI，在 Linux 与 Windows 上提供毫秒级响应；右上角切换浅色／深色外观可实时同步下方全部真实界面快照。</p>
+          </div>
+        </div>
+
+        <div class="stage-toolbar">
+          <div class="segmented-track" role="tablist" aria-label="切换桌面工作台页面">
+            <button type="button" class="seg-btn" role="tab" data-wb-tab="dashboard" aria-selected="true">今日工作台</button>
+            <button type="button" class="seg-btn" role="tab" data-wb-tab="journal" aria-selected="false">三时段日记总表</button>
+            <button type="button" class="seg-btn" role="tab" data-wb-tab="editor" aria-selected="false">证据并排编辑</button>
+            <button type="button" class="seg-btn" role="tab" data-wb-tab="sources" aria-selected="false">来源目录与连接</button>
+            <button type="button" class="seg-btn" role="tab" data-wb-tab="categories" aria-selected="false">动态分类管理</button>
+            <button type="button" class="seg-btn" role="tab" data-wb-tab="models" aria-selected="false">多模型配置</button>
+          </div>
+          <span style="font-size:12px;color:var(--muted)">点击截图可放大检视原始像素细节</span>
+        </div>
+
+        <div class="surface-sheet stage-frame">
+          <div class="stage-window">
+            <img id="workbench-shot" src="./assets/light-dashboard-wide.png" alt="daily-log 原生桌面工作台界面预览" width="1700" height="950" data-zoomable>
+          </div>
+          <div class="stage-caption-bar">
+            <strong id="wb-caption-title">今日工作台（Bento 概览与全天时间轴）</strong>
+            <span id="wb-caption-desc">一屏聚合今日日期、AI 提炼事项数、原始证据、来源健康状态与 Markdown / Sheets / Excel 同步结果。</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ======================================================================
+         Pipeline & Core Engineering Guarantees
+         ====================================================================== -->
+    <section id="pipeline" class="page-section">
+      <div class="container">
+        <div class="section-header">
+          <div>
+            <div class="eyebrow">ARCHITECTURE &amp; SEMANTICS</div>
+            <h2>克制而严密的数据流转纪律</h2>
+            <p>个人日志系统的核心难点不在于调用一次大模型，而在于长期运行中的<strong>幂等去重、断电补采、凭证隔离与人工修改保护</strong>。</p>
+          </div>
+        </div>
+
+        <div class="pipeline-flow">
+          <div class="surface-card pipe-step">
+            <span class="pipe-num tnum">STEP 01 · COLLECT</span>
+            <h3>水位窗口采集</h3>
+            <p>按各来源最后成功时间减 3 天重叠回查，转换原始事件时间戳至北京时间，生成稳定事件 ID 增量写入本地 SQLite。</p>
+          </div>
+          <div class="surface-card pipe-step">
+            <span class="pipe-num tnum">STEP 02 · REDACT &amp; INFER</span>
+            <h3>脱敏与阅读会话推断</h3>
+            <p>过滤常见 API 密钥、私钥块与无关系统提示；将同日相近 Zotero 文献标注聚合为可解释的论文阅读会话，保留历史修订快照。</p>
+          </div>
+          <div class="surface-card pipe-step">
+            <span class="pipe-num tnum">STEP 03 · DISTILL</span>
+            <h3>受约束 AI 事项提炼</h3>
+            <p>将跨来源多轮记录归并为 ≤28 字短标题与进展说明；若输出残留对话角色标签、粘贴原文或超长，程序自动要求模型重写校验。</p>
+          </div>
+          <div class="surface-card pipe-step">
+            <span class="pipe-num tnum">STEP 04 · PROTECTED SYNC</span>
+            <h3>核验式多目标输出</h3>
+            <p>导出本地 Markdown / JSON，并以写前复读 + 写后核验策略增量更新 Google Sheets 与本地 Excel，严守人工内容与已有公式。</p>
+          </div>
+        </div>
+
+        <div class="bento-grid-3">
+          <div class="surface-card feature-card">
+            <div class="feature-icon">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+            </div>
+            <h3>人工编辑与表格公式零覆盖</h3>
+            <p>手动编辑保存的日记永不被后续自动整理覆盖。Google Sheets 与 Excel 同步按实际表头和唯一键定位，遇到人工修改、公式或未知非空行自动转入建议队列。</p>
+          </div>
+
+          <div class="surface-card feature-card">
+            <div class="feature-icon">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8.5"/><path d="M12 7v5l3.5 2"/></svg>
+            </div>
+            <h3>关机欠账自动按水位自愈</h3>
+            <p>无需常驻守护进程，也不要求电脑彻夜开机。通过持久化 <code>systemd</code> 定时器或 Windows 登录恢复任务，开机后自动按各来源水位补齐跨天记录。</p>
+          </div>
+
+          <div class="surface-card feature-card">
+            <div class="feature-icon">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="10" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+            </div>
+            <h3>本地隔离与全链路凭证遮盖</h3>
+            <p>密钥仅保存在被 Git 排除的 <code>.env</code> 或 <code>0600</code> 权限的 <code>*.settings.json</code>。表格同步自动脱敏已知凭证，行主键疑似含密钥时直接跳过写入。</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ======================================================================
+         Ecosystem: 10 Built-in Sources & 3 Sync Outputs
+         ====================================================================== -->
+    <section id="ecosystem" class="page-section">
+      <div class="container">
+        <div class="section-header">
+          <div>
+            <div class="eyebrow">SOURCES &amp; OUTPUTS</div>
+            <h2>围绕科研、编码与日常构建的连接生态</h2>
+            <p>所有外部连接默认关闭，均采用各服务官方公开文档定义的只读 API、本机回环服务或本地文件夹扫描，不破解私有数据库、不注入轮询脚本。</p>
+          </div>
+        </div>
+
+        <div class="filter-pills" role="group" aria-label="按类别筛选连接器">
+          <button type="button" class="choice-pill" data-eco-filter="all" aria-pressed="true">全部 (13)</button>
+          <button type="button" class="choice-pill" data-eco-filter="study" aria-pressed="false">文献与日程 (3)</button>
+          <button type="button" class="choice-pill" data-eco-filter="dev" aria-pressed="false">AI 与代码研发 (4)</button>
+          <button type="button" class="choice-pill" data-eco-filter="local" aria-pressed="false">本机活动与笔记 (3)</button>
+          <button type="button" class="choice-pill" data-eco-filter="output" aria-pressed="false">导出与表格同步 (3)</button>
+        </div>
+
+        <div class="connector-grid">
+          <div class="surface-card connector-card" data-group="study">
+            <div>
+              <div class="conn-head">
+                <h3>Zotero</h3>
+                <span class="status-pill accent">本机只读 API</span>
+              </div>
+              <p class="conn-desc" style="margin-top:8px">通过 <code>localhost:23119/api</code> 读取论文高亮标注、笔记与 CSL 元数据，无需云端密钥，支持按时间间隔推断阅读会话。</p>
+            </div>
+            <div class="conn-meta"><span>默认已登记</span><code>zotero.enabled</code></div>
+          </div>
+
+          <div class="surface-card connector-card" data-group="study">
+            <div>
+              <div class="conn-head">
+                <h3>Todoist</h3>
+                <span class="status-pill accent">官方 REST API</span>
+              </div>
+              <p class="conn-desc" style="margin-top:8px">采集本人完成的任务事件并补充描述快照，支持重复任务多次完成独立计数，自动检测免费版历史保留期缺口。</p>
+            </div>
+            <div class="conn-meta"><span>默认已登记</span><code>TODOIST_API_TOKEN</code></div>
+          </div>
+
+          <div class="surface-card connector-card" data-group="study">
+            <div>
+              <div class="conn-head">
+                <h3>Google Calendar</h3>
+                <span class="status-pill accent">OAuth / 服务账号</span>
+              </div>
+              <p class="conn-desc" style="margin-top:8px">只读已授权日历，自动展开周期日程实例、处理跨午夜边界，并在源端取消日程时同步更新本地状态。</p>
+            </div>
+            <div class="conn-meta"><span>默认已登记</span><code>GOOGLE_OAUTH_TOKEN</code></div>
+          </div>
+
+          <div class="surface-card connector-card" data-group="dev">
+            <div>
+              <div class="conn-head">
+                <h3>Codex 会话</h3>
+                <span class="status-pill accent">只读 app-server</span>
+              </div>
+              <p class="conn-desc" style="margin-top:8px">读取本机及 SSH 远程主机的完整对话轮次，过滤内部思考与工具输出，仅提取有原文证据支撑的实质技术讨论。</p>
+            </div>
+            <div class="conn-meta"><span>支持多 SSH 主机</span><code>codex.hosts</code></div>
+          </div>
+
+          <div class="surface-card connector-card" data-group="dev">
+            <div>
+              <div class="conn-head">
+                <h3>GitHub</h3>
+                <span class="status-pill">来源目录</span>
+              </div>
+              <p class="conn-desc" style="margin-top:8px">读取认证用户的提交推送、Pull Request、Issue 与代码评审动态，用户名留空时通过令牌自动识别验证。</p>
+            </div>
+            <div class="conn-meta"><span>官方 REST API</span><code>GITHUB_TOKEN</code></div>
+          </div>
+
+          <div class="surface-card connector-card" data-group="dev">
+            <div>
+              <div class="conn-head">
+                <h3>GitLab</h3>
+                <span class="status-pill">来源目录</span>
+              </div>
+              <p class="conn-desc" style="margin-top:8px">兼容官方 <code>gitlab.com</code> 与自建 GitLab 实例，采集项目推送、Merge Request 与议题协作记录。</p>
+            </div>
+            <div class="conn-meta"><span>API v4</span><code>GITLAB_TOKEN</code></div>
+          </div>
+
+          <div class="surface-card connector-card" data-group="dev">
+            <div>
+              <div class="conn-head">
+                <h3>WakaTime</h3>
+                <span class="status-pill">来源目录</span>
+              </div>
+              <p class="conn-desc" style="margin-top:8px">拉取每日编码时长汇总，按项目聚合为具备实测分钟数证据的研发活动记录，自动忽略不足 1 分钟的碎片。</p>
+            </div>
+            <div class="conn-meta"><span>实测时长来源</span><code>WAKATIME_API_KEY</code></div>
+          </div>
+
+          <div class="surface-card connector-card" data-group="local">
+            <div>
+              <div class="conn-head">
+                <h3>ActivityWatch</h3>
+                <span class="status-pill">来源目录</span>
+              </div>
+              <p class="conn-desc" style="margin-top:8px">连接本机 <code>127.0.0.1:5600</code> 服务读取窗口与浏览器活跃存储桶，自动剔除 AFK 挂机桶与瞬时切换。</p>
+            </div>
+            <div class="conn-meta"><span>完全离线本机</span><code>无需密钥</code></div>
+          </div>
+
+          <div class="surface-card connector-card" data-group="local">
+            <div>
+              <div class="conn-head">
+                <h3>Obsidian</h3>
+                <span class="status-pill">来源目录</span>
+              </div>
+              <p class="conn-desc" style="margin-top:8px">按文件修改时间扫描本地 Vault 中的 Markdown 笔记编辑，内置输出路径排除守卫，绝不将导出的日记误读为新笔记。</p>
+            </div>
+            <div class="conn-meta"><span>本地目录扫描</span><code>vault_path</code></div>
+          </div>
+
+          <div class="surface-card connector-card" data-group="local">
+            <div>
+              <div class="conn-head">
+                <h3>Logseq</h3>
+                <span class="status-pill">来源目录</span>
+              </div>
+              <p class="conn-desc" style="margin-top:8px">扫描本地知识图谱目录中的 <code>.md</code> 与 <code>.org</code> 页面变更，生成带本地文件直达引用的编辑事件。</p>
+            </div>
+            <div class="conn-meta"><span>Markdown / Org</span><code>graph_path</code></div>
+          </div>
+
+          <div class="surface-card connector-card" data-group="output">
+            <div>
+              <div class="conn-head">
+                <h3>Markdown / JSON</h3>
+                <span class="status-pill good">默认启用</span>
+              </div>
+              <p class="conn-desc" style="margin-top:8px">零外部依赖导出结构化 JSON 与人类可读的三时段 Markdown 文件，天然适配 Git 归档或二次检索工具。</p>
+            </div>
+            <div class="conn-meta"><span>本地文件系统</span><code>outputs/markdown</code></div>
+          </div>
+
+          <div class="surface-card connector-card" data-group="output">
+            <div>
+              <div class="conn-head">
+                <h3>Google Sheets</h3>
+                <span class="status-pill">原生同步</span>
+              </div>
+              <p class="conn-desc" style="margin-top:8px">同步「每日活动、活动流水、论文阅读、统计看板」四张工作表，支持自动换行、分类配色与 12 格活动占比条。</p>
+            </div>
+            <div class="conn-meta"><span>RAW 批量写入 + 读回核验</span><code>sheets.spreadsheet_id</code></div>
+          </div>
+
+          <div class="surface-card connector-card" data-group="output">
+            <div>
+              <div class="conn-head">
+                <h3>本地 Excel (.xlsx)</h3>
+                <span class="status-pill">原生同步</span>
+              </div>
+              <p class="conn-desc" style="margin-top:8px">基于纯 Go Excelize 读写，无需安装 Office；检测 <code>~$</code> 占用锁，保留最近 5 份自动备份并原子替换。</p>
+            </div>
+            <div class="conn-meta"><span>保留公式与样式</span><code>excel.path</code></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ======================================================================
+         Three-Platform Synergy & Android HTTPS Pairing
+         ====================================================================== -->
+    <section id="platforms" class="page-section">
+      <div class="container">
+        <div class="mobile-split">
+          <div>
+            <div class="eyebrow">CROSS-DEVICE PAIRING</div>
+            <h2 style="font-size:30px;font-weight:700;letter-spacing:-0.6px;line-height:1.2">桌面采集，手机随时查阅与批注</h2>
+            <p style="margin-top:10px;color:var(--muted);font-size:14px;line-height:1.6">
+              无需将个人活动数据库上传第三方云端。<code>daily-log</code> 将同一套 MyGo 界面编译为 WebAssembly，使 Android 手机可在局域网通过受信任 HTTPS 直连 Linux 或 Windows 采集主机。
+            </p>
+
+            <div class="mobile-points">
+              <div class="surface-card mobile-point">
+                <span class="step-badge tnum">1</span>
+                <div>
+                  <strong>一次性配对码与受限 TLS 会话</strong>
+                  <p>默认仅监听 <code>127.0.0.1</code>；开启移动访问必须显式提供 TLS 证书。配对码 10 分钟有效，换取 12 小时加密会话，桌面端可随时吊销或重置。</p>
+                </div>
+              </div>
+              <div class="surface-card mobile-point">
+                <span class="step-badge tnum">2</span>
+                <div>
+                  <strong>断网草稿保留与原页恢复</strong>
+                  <p>针对移动网络波动与中文软键盘长文输入专项调优；网络闪断或会话过期时未保存正文不丢失，新标签页重配对后即可返回原页提交。</p>
+                </div>
+              </div>
+              <div class="surface-card mobile-point">
+                <span class="step-badge tnum">3</span>
+                <div>
+                  <strong>并发编辑版本冲突对照</strong>
+                  <p>基于修订号（Revision）校验保存请求。若桌面端已先行更新同一天日记，手机提交时自动展开版本对照，杜绝静默覆盖。</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="surface-sheet phone-stage">
+            <div class="segmented-track" role="tablist" aria-label="切换移动端界面快照">
+              <button type="button" class="seg-btn" role="tab" data-phone-tab="dashboard-phone" aria-selected="true">移动工作台</button>
+              <button type="button" class="seg-btn" role="tab" data-phone-tab="phone-journal" aria-selected="false">日记列表</button>
+              <button type="button" class="seg-btn" role="tab" data-phone-tab="phone-editor" aria-selected="false">日记编辑</button>
+            </div>
+
+            <div class="phone-bezel">
+              <img id="phone-shot" src="./assets/light-dashboard-phone.png" alt="daily-log Android 移动端自适应界面预览" width="420" height="860" data-zoomable>
+            </div>
+
+            <span id="phone-caption" style="font-size:12px;color:var(--muted);text-align:center">移动端工作台：窄屏自适应单列卡片与顶栏导航胶囊</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ======================================================================
+         Design System Spotlight (Surfaces, Oklab Cast & Motion)
+         ====================================================================== -->
+    <section id="design" class="page-section">
+      <div class="container">
+        <div class="section-header">
+          <div>
+            <div class="eyebrow">DESIGN SYSTEM</div>
+            <h2>层次来自面而非线，色温随强调色流转</h2>
+            <p>参考 <code>mygo-music</code> 的克制视觉语言：卡片不投影、不用彩色描边；纯灰是「没人做过选择」的颜色，每一级面都在 Oklab 空间朝当前强调色微量掺色。</p>
+          </div>
+          <div class="filter-pills" style="margin-bottom:0" role="group" aria-label="体验四种房间色温">
+            <button type="button" class="choice-pill" data-set-accent="default" aria-pressed="true">默认暖调</button>
+            <button type="button" class="choice-pill" data-set-accent="seablue" aria-pressed="false">海蓝冷调</button>
+            <button type="button" class="choice-pill" data-set-accent="teal" aria-pressed="false">青绿松调</button>
+            <button type="button" class="choice-pill" data-set-accent="violet" aria-pressed="false">紫罗兰暮调</button>
+          </div>
+        </div>
+
+        <div class="design-split">
+          <div class="surface-card">
+            <h3 style="font-size:15px;font-weight:700">五级面阶梯（点击上方按钮实时观察全页色温变化）</h3>
+            <p style="font-size:13px;color:var(--muted);margin-top:4px">容器内的子块要么抬升一级，要么下沉一级；正文文字始终保持中性无偏色。</p>
+
+            <div class="ladder-stack">
+              <div class="ladder-swatch" style="background:var(--bg)">
+                <strong>1. bg（页面底面）</strong>
+                <span class="tnum">Light 1.2% · Dark 3.0% cast</span>
+              </div>
+              <div class="ladder-swatch" style="background:var(--sidebar)">
+                <strong>2. sidebar（侧边导航面）</strong>
+                <span class="tnum">Light 3.0% · Dark 5.0% cast</span>
+              </div>
+              <div class="ladder-swatch" style="background:var(--surface)">
+                <strong>3. surface（卡片与表格面 · edgeLit）</strong>
+                <span class="tnum">Light 2.4% · Dark 5.5% cast</span>
+              </div>
+              <div class="ladder-swatch" style="background:var(--tile)">
+                <strong>4. tile（卡片内抬升指标块）</strong>
+                <span class="tnum">Light 1.5% · Dark 6.0% cast</span>
+              </div>
+              <div class="ladder-swatch" style="background:var(--sunken)">
+                <strong>5. sunken（内嵌凹井与时段槽）</strong>
+                <span class="tnum">Light 3.8% · Dark 3.5% cast</span>
+              </div>
+              <div class="ladder-swatch" style="background:var(--raised);box-shadow:0 4px 12px -2px var(--shade)">
+                <strong>6. raised（浮层提示 · 唯一投影层）</strong>
+                <span class="tnum">Light 1.0% · Dark 6.5% cast</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="surface-card cast-compare">
+            <div>
+              <h3 style="font-size:15px;font-weight:700">原生渲染实拍对照 &amp; 动效三条纪律</h3>
+              <p style="font-size:13px;color:var(--muted);margin-top:4px">左图为「默认」暖色温工作台，右图为「海蓝」冷色温工作台——改变的不只是按钮，而是整间工作台的空气感。</p>
+            </div>
+
+            <div class="cast-compare-imgs">
+              <figure class="cast-shot">
+                <img data-shot="dashboard" src="./assets/light-dashboard.png" alt="默认暖调工作台快照" width="1140" height="800" data-zoomable>
+                <figcaption><span>Accent: 默认</span><span class="tnum">oklch(24°)</span></figcaption>
+              </figure>
+              <figure class="cast-shot">
+                <img data-shot="dashboard-sea-blue" src="./assets/light-dashboard-sea-blue.png" alt="海蓝冷调工作台快照" width="1140" height="800" data-zoomable>
+                <figcaption><span>Accent: 海蓝</span><span class="tnum">#3569c6 / #4d8dff</span></figcaption>
+              </figure>
+            </div>
+
+            <div class="sunken-well" style="padding:12px 14px;font-size:12px;color:var(--muted);display:grid;gap:4px">
+              <div><strong style="color:var(--text)">· 开合不淡出文字</strong>：面板折叠保持 <code>Opacity: 1</code> 原位收起，邻居以统一 <code>200ms</code> 跟随滑动。</div>
+              <div><strong style="color:var(--text)">· 换页不发生位移</strong>：<code>180ms</code> 原地交叉淡入淡出，骨架屏与成品同尺寸并响应系统 <code>ReduceMotion</code>。</div>
+              <div><strong style="color:var(--text)">· 说话不推动版面</strong>：加载进度与错误卡片悬浮于页眉或右下角，正文永不因状态横幅上下跳动。</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ======================================================================
+         Quickstart & Unattended Deployment
+         ====================================================================== -->
+    <section id="quickstart" class="page-section">
+      <div class="container">
+        <div class="section-header">
+          <div>
+            <div class="eyebrow">QUICKSTART</div>
+            <h2>从零依赖演示开始，按需接入你的工作流</h2>
+            <p>核心 CLI 基于 Go <code>1.24+</code> 构建，<code>demo</code> 模式仅使用合成记录输出到独立目录，无需配置任何账号或模型密钥即可体验完整链路。</p>
+          </div>
+        </div>
+
+        <div class="segmented-track" role="tablist" aria-label="选择快速开始场景">
+          <button type="button" class="seg-btn" role="tab" data-qs-tab="linux" aria-selected="true">Linux / macOS CLI</button>
+          <button type="button" class="seg-btn" role="tab" data-qs-tab="windows" aria-selected="false">Windows PowerShell</button>
+          <button type="button" class="seg-btn" role="tab" data-qs-tab="gui" aria-selected="false">桌面工作台与手机连接</button>
+          <button type="button" class="seg-btn" role="tab" data-qs-tab="cron" aria-selected="false">23:00 无人值守定时</button>
+        </div>
+
+        <div class="code-panel" data-qs-panel="linux">
+          <div class="code-card">
+            <div class="code-card-head">
+              <span>构建核心单文件、运行离线合成演示与初始化本地工作区</span>
+              <button type="button" class="copy-btn" data-copy>复制命令</button>
+            </div>
+            <pre><code># 1. 构建纯静态 Go 核心 CLI 并运行零配置离线演示
+go build -trimpath -o dist/daily-log ./cmd/daily-log
+./dist/daily-log --version
+./dist/daily-log demo
+
+# 2. 在专用目录初始化真实配置、自检连接并执行「采集 → 整理 → 导出」
+./dist/daily-log init
+./dist/daily-log doctor
+./dist/daily-log run
+
+# 3. 查看采集水位、阅读指定日期日记或按水位补跑欠账
+./dist/daily-log status
+./dist/daily-log show 2026-11-24
+./dist/daily-log recover</code></pre>
+          </div>
+        </div>
+
+        <div class="code-panel" data-qs-panel="windows" hidden>
+          <div class="code-card">
+            <div class="code-card-head">
+              <span>Windows PowerShell 构建、离线演示与升级前数据库快照备份</span>
+              <button type="button" class="copy-btn" data-copy>复制命令</button>
+            </div>
+            <pre><code># 1. 构建 Windows 可执行文件并运行合成演示（无需账号与 API Key）
+go build -trimpath -o dist/daily-log.exe ./cmd/daily-log
+.\dist\daily-log.exe --version
+.\dist\daily-log.exe demo
+
+# 2. 初始化配置、安全备份 SQLite 数据库并执行日常整理
+.\dist\daily-log.exe init
+.\dist\daily-log.exe --config config.yaml backup
+.\dist\daily-log.exe --config config.yaml run</code></pre>
+          </div>
+        </div>
+
+        <div class="code-panel" data-qs-panel="gui" hidden>
+          <div class="code-card">
+            <div class="code-card-head">
+              <span>构建 MyGo 原生桌面端（需 Go 1.27.3）及启动 Android HTTPS 移动配对服务</span>
+              <button type="button" class="copy-btn" data-copy>复制命令</button>
+            </div>
+            <pre><code># 启动原生桌面工作台（首次启动自动在用户配置目录初始化本地设置）
+go -C desktop build -o ../dist/daily-log-gui .
+./dist/daily-log-gui
+
+# 构建 WebAssembly 移动前端并启动受信任 HTTPS 局域网手机配对
+(cd desktop &amp;&amp; mygo build -platform web)
+./dist/daily-log --config config.yaml mobile --listen 192.168.1.20:8443 \
+  --tls-cert /path/to/host.crt --tls-key /path/to/host.key</code></pre>
+          </div>
+        </div>
+
+        <div class="code-panel" data-qs-panel="cron" hidden>
+          <div class="code-card">
+            <div class="code-card-head">
+              <span>安装北京时间每日 23:00 自动归档与开机恢复系统任务</span>
+              <button type="button" class="copy-btn" data-copy>复制命令</button>
+            </div>
+            <pre><code># Linux：安装 systemd --user 持久化定时器与登录恢复单元
+bash scheduler/linux/install.sh
+systemctl --user list-timers 'daily-log-*'
+
+# Windows（PowerShell）：注册 Task Scheduler 当前用户任务（无需保存系统登录密码）
+powershell -ExecutionPolicy Bypass -File scheduler/windows/install.ps1
+Get-ScheduledTask -TaskName 'PersonalDailyLog-*'</code></pre>
+          </div>
+        </div>
+
+        <div class="docs-links-grid">
+          <a class="tile-box doc-link-tile" href="https://github.com/RoxyXu151/daily-log/blob/main/docs/configuration.md" target="_blank" rel="noopener noreferrer">
+            <strong>配置与来源授权 <span>↗</span></strong>
+            <span>各来源字段、Google OAuth PKCE 与 AI 模型设置</span>
+          </a>
+          <a class="tile-box doc-link-tile" href="https://github.com/RoxyXu151/daily-log/blob/main/docs/architecture.md" target="_blank" rel="noopener noreferrer">
+            <strong>架构与数据语义 <span>↗</span></strong>
+            <span>SQLite 表结构、幂等时间边界与表格核验机制</span>
+          </a>
+          <a class="tile-box doc-link-tile" href="https://github.com/RoxyXu151/daily-log/blob/main/docs/design.md" target="_blank" rel="noopener noreferrer">
+            <strong>界面设计系统 <span>↗</span></strong>
+            <span>五级面阶梯、Oklab 色温、字号网格与动效词汇</span>
+          </a>
+          <a class="tile-box doc-link-tile" href="https://github.com/RoxyXu151/daily-log/blob/main/CONTRIBUTING.md" target="_blank" rel="noopener noreferrer">
+            <strong>开发与贡献指南 <span>↗</span></strong>
+            <span>目录职责、回归测试、视觉快照与扩展新来源</span>
+          </a>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Footer -->
+  <footer class="site-footer">
+    <div class="container footer-inner">
+      <div style="display:flex;align-items:center;gap:10px">
+        <img src="./assets/logo.svg" alt="" width="20" height="20" style="border-radius:5px">
+        <span><strong>daily-log</strong> · Personal Daily Log — 纯 Go 本地优先个人日志工作台，基于 MIT 协议开源</span>
+      </div>
+      <div class="footer-links">
+        <a href="https://github.com/RoxyXu151/daily-log" target="_blank" rel="noopener noreferrer">GitHub 仓库</a>
+        <a href="https://github.com/RoxyXu151/daily-log/releases" target="_blank" rel="noopener noreferrer">发行版本</a>
+        <a href="https://github.com/RoxyXu151/daily-log/issues" target="_blank" rel="noopener noreferrer">问题反馈</a>
+        <a href="https://github.com/RoxyXu151/daily-log/blob/main/SECURITY.md" target="_blank" rel="noopener noreferrer">安全策略</a>
+        <a href="https://github.com/RoxyXu151/daily-log/blob/main/LICENSE" target="_blank" rel="noopener noreferrer">MIT License</a>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Screenshot Zoom Lightbox -->
+  <div id="lightbox" class="lightbox" role="dialog" aria-modal="true" aria-label="放大查看界面截图">
+    <img id="lightbox-img" src="./assets/light-dashboard-wide.png" alt="放大界面预览">
+  </div>
+
+  <script src="./app.js" defer></script>
+</body>
+</html>

@@ -1,0 +1,19 @@
+name: 功能或来源建议 (Feature Request)
+description: 建议新的活动来源连接器、导出目标或交互改进
+title: "[Feat]: "
+labels: ["enhancement"]
+body:
+  - type: textarea
+    id: goal
+    attributes:
+      label: 场景与目标
+      description: 希望解决什么日常记录或回顾痛点？
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: 方案或接口说明
+      description: 若建议新增数据来源，请附上该服务的官方只读 API、本地接口或文件格式说明链接
+    validations:
+      required: true

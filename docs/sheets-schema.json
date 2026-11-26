@@ -1,0 +1,143 @@
+{
+  "inspected_on": "2026-10-21",
+  "access": "read-only",
+  "metadata": {
+    "spreadsheetId": "1DhIBv-1XrUjSWMNeYSG6r_4R5M798bgRL2kOAYPm0sE",
+    "spreadsheetUrl": "https://docs.google.com/spreadsheets/d/1DhIBv-1XrUjSWMNeYSG6r_4R5M798bgRL2kOAYPm0sE/edit",
+    "properties": {
+      "title": "AI 每日活动日志",
+      "locale": "zh_CN",
+      "timeZone": "Asia/Shanghai"
+    },
+    "sheets": [
+      {
+        "properties": {
+          "sheetId": 2088661637,
+          "title": "每日活动",
+          "index": 0,
+          "sheetType": "GRID",
+          "gridProperties": {
+            "rowCount": 1000,
+            "columnCount": 26,
+            "frozenRowCount": 1
+          }
+        }
+      },
+      {
+        "properties": {
+          "sheetId": 201,
+          "title": "活动流水",
+          "index": 1,
+          "sheetType": "GRID",
+          "gridProperties": {
+            "rowCount": 1000,
+            "columnCount": 26,
+            "frozenRowCount": 1
+          }
+        }
+      },
+      {
+        "properties": {
+          "sheetId": 202,
+          "title": "论文阅读",
+          "index": 2,
+          "sheetType": "GRID",
+          "gridProperties": {
+            "rowCount": 1000,
+            "columnCount": 26,
+            "frozenRowCount": 1
+          }
+        }
+      },
+      {
+        "properties": {
+          "sheetId": 203,
+          "title": "统计看板",
+          "index": 3,
+          "sheetType": "GRID",
+          "gridProperties": {
+            "rowCount": 1000,
+            "columnCount": 26,
+            "frozenRowCount": 1
+          }
+        }
+      },
+      {
+        "properties": {
+          "sheetId": 204,
+          "title": "使用说明",
+          "index": 4,
+          "sheetType": "GRID",
+          "gridProperties": {
+            "rowCount": 1000,
+            "columnCount": 26,
+            "frozenRowCount": 1
+          }
+        }
+      }
+    ]
+  },
+  "headers": {
+    "每日活动": [
+      "日期",
+      "星期",
+      "上午（06-12）",
+      "下午（12-18）",
+      "晚上（18-24）",
+      "活动占比",
+      "科研学习（分钟）",
+      "课程学习（分钟）",
+      "职业学习（分钟）",
+      "校园与生活（分钟）",
+      "已完成任务数",
+      "论文标注数",
+      "审核状态",
+      "本人补充／纠正",
+      "证据来源",
+      "最后整理时间"
+    ],
+    "活动流水": [
+      "事件ID",
+      "来源",
+      "事件类型",
+      "记录日期（北京时间）",
+      "开始时间",
+      "结束时间",
+      "标题／活动",
+      "内容摘要",
+      "类别",
+      "关联对象ID",
+      "证据链接",
+      "证据性质",
+      "可信级别",
+      "是否写入日记",
+      "事件更新时间"
+    ],
+    "论文阅读": [
+      "会话ID",
+      "Zotero 论文ID",
+      "论文标题",
+      "开始时间",
+      "结束时间",
+      "标注数量",
+      "标注跨度（分钟）",
+      "活跃阅读时长（分钟）",
+      "页码范围",
+      "阅读／笔记摘要",
+      "推断依据",
+      "精度",
+      "链接",
+      "更新时间"
+    ],
+    "统计看板": [
+      "指标",
+      "数值",
+      "说明",
+      "更新时间"
+    ],
+    "使用说明": [
+      "模块",
+      "规则／说明"
+    ]
+  }
+}
