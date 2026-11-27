@@ -106,36 +106,50 @@
   const workbenchViews = {
     dashboard: {
       file: "dashboard-wide",
+      w: 1700,
+      h: 950,
       title: "今日工作台（Bento 概览与全天时间轴）",
       desc: "一屏聚合今日日期、AI 提炼事项数、原始证据、来源健康状态与 Markdown / Sheets / Excel 同步结果。"
     },
     journal: {
       file: "journal-expanded",
+      w: 1140,
+      h: 900,
       title: "日记总表（三时段事项展开与分类计数）",
       desc: "默认按日期概览全天精华与分类分钟数；点击任意日期平滑展开上午、下午、晚上事项，对话原文留在证据层。"
     },
     editor: {
       file: "editor",
+      w: 1140,
+      h: 800,
       title: "宽屏日记编辑器（正文修改与原始证据并排核对）",
       desc: "左侧分时段编辑上午／下午／晚上与本人补充，右侧同屏查阅关联证据、切换预览或比对历史版本。"
     },
     sources: {
       file: "sources-catalog",
+      w: 1140,
+      h: 900,
       title: "来源管理与标准接入目录",
       desc: "内置 Zotero、Todoist、Codex、Calendar 与常见研发笔记服务目录；填入令牌即可测试连接并查看覆盖窗口。"
     },
     categories: {
       file: "categories",
+      w: 1140,
+      h: 800,
       title: "动态分类与简称管理",
       desc: "自由新增、排序、设置两字简称或重命名分类；保存后历史事件、手工分类覆盖与表格图例同步迁移。"
     },
     models: {
       file: "models-form",
+      w: 1140,
+      h: 900,
       title: "多模型卡片管理（本地与云端 OpenAI 兼容协议）",
       desc: "同时保存本机无密钥模型与云端服务，一键拉取官方模型列表、测试连通并切换全局默认模型。"
     },
     schedule: {
       file: "schedule",
+      w: 1140,
+      h: 860,
       title: "日志更新与系统定时任务",
       desc: "设置北京时间归档时刻、回查天数与纳入事件类型，一键确认安装 Linux systemd 或 Windows 计划任务。"
     }
@@ -172,7 +186,10 @@
     });
     const stageImg = document.getElementById("workbench-shot");
     if (stageImg && workbenchViews[currentWorkbench]) {
-      stageImg.src = `./assets/${prefix}-${workbenchViews[currentWorkbench].file}.png`;
+      const view = workbenchViews[currentWorkbench];
+      stageImg.width = view.w;
+      stageImg.height = view.h;
+      stageImg.src = `./assets/${prefix}-${view.file}.png`;
     }
     const phoneImg = document.getElementById("phone-shot");
     if (phoneImg && phoneViews[currentPhone]) {

@@ -196,6 +196,7 @@ pre code {
 
 img {
   max-width: 100%;
+  height: auto;
   display: block;
 }
 
@@ -1202,6 +1203,12 @@ section.page-section {
   background: var(--bg);
 }
 
+.cast-shot img {
+  width: 100%;
+  height: auto;
+  cursor: zoom-in;
+}
+
 .cast-shot figcaption {
   padding: 8px 10px;
   font-size: 11px;
@@ -1351,8 +1358,11 @@ section.page-section {
 }
 
 .lightbox img {
+  width: auto;
+  height: auto;
   max-width: min(1440px, 95vw);
   max-height: 90vh;
+  object-fit: contain;
   border-radius: var(--r-card);
   box-shadow: 0 24px 64px rgba(0, 0, 0, 0.55);
   cursor: zoom-out;
