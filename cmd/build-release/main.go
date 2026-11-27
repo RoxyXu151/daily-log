@@ -32,7 +32,7 @@ func command(root string, env []string, name string, args ...string) error {
 }
 func stage(root, target string) error {
 	files := []string{
-		"README.md", "LICENSE", "CONTRIBUTING.md", "SECURITY.md", ".env.example", ".gitignore", ".gitattributes", "go.mod", "go.sum",
+		"README.md", "LICENSE", "NOTICE", "CONTRIBUTING.md", "SECURITY.md", ".env.example", ".gitignore", ".gitattributes", "go.mod", "go.sum",
 		"desktop/go.mod", "desktop/go.sum", "desktop/mygo.json", "desktop/logo.svg", "desktop/logo.png",
 	}
 	for _, dir := range []string{"cmd", "internal", "desktop", "scheduler", "docs", ".github"} {
@@ -183,7 +183,7 @@ func run() error {
 		if err = command(staged, []string{"GOOS=" + platform, "GOARCH=amd64", "CGO_ENABLED=0"}, "go", "build", "-trimpath", "-o", filepath.Join(bundle, binary), "./cmd/daily-log"); err != nil {
 			return err
 		}
-		for _, rel := range []string{"README.md", "LICENSE"} {
+		for _, rel := range []string{"README.md", "LICENSE", "NOTICE"} {
 			data, err := os.ReadFile(filepath.Join(staged, rel))
 			if err != nil {
 				return err
@@ -192,7 +192,7 @@ func run() error {
 				return err
 			}
 		}
-		if err = archive(filepath.Join(destination, "daily-log-cli-"+variant+".zip"), bundle, "daily-log", []string{binary, "README.md", "LICENSE"}); err != nil {
+		if err = archive(filepath.Join(destination, "daily-log-cli-"+variant+".zip"), bundle, "daily-log", []string{binary, "README.md", "LICENSE", "NOTICE"}); err != nil {
 			return err
 		}
 		if platform == runtime.GOOS {
@@ -237,7 +237,7 @@ func run() error {
 					return err
 				}
 			}
-			for _, rel := range []string{"README.md", "LICENSE"} {
+			for _, rel := range []string{"README.md", "LICENSE", "NOTICE"} {
 				data, err := os.ReadFile(filepath.Join(staged, rel))
 				if err != nil {
 					return err

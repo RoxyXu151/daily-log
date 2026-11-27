@@ -3,9 +3,9 @@
 [![Test](https://github.com/RoxyXu151/daily-log/actions/workflows/test.yml/badge.svg)](https://github.com/RoxyXu151/daily-log/actions/workflows/test.yml)
 [![Pages](https://github.com/RoxyXu151/daily-log/actions/workflows/pages.yml/badge.svg)](https://roxyxu151.github.io/daily-log/)
 [![Go](https://img.shields.io/badge/Go-1.24%2B%20%7C%201.27-00ADD8?logo=go&logoColor=white)](go.mod)
-[![License: MIT](https://img.shields.io/badge/License-MIT-2ea44f.svg)](LICENSE)
+[![License: Apache-2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
 
-把 Zotero 阅读标注、Todoist 完成任务、Codex 对话、代码仓库与本地笔记活动整理成**证据可追溯的三时段日记**。Go 版 `0.3.0` 默认在本机保存 SQLite 并导出 Markdown 与 JSON，支持原生桌面工作台、Android 浏览器安全配对以及 Google Sheets / Excel 无损同步，源码按 [MIT](LICENSE) 分发。
+把 Zotero 阅读标注、Todoist 完成任务、Codex 对话、代码仓库与本地笔记活动整理成**证据可追溯的三时段日记**。Go 版 `0.3.0` 默认在本机保存 SQLite 并导出 Markdown 与 JSON，支持原生桌面工作台、Android 浏览器安全配对以及 Google Sheets / Excel 无损同步，源码按 [Apache-2.0](LICENSE) 分发。
 
 👉 **[在线产品主页与界面预览 (GitHub Pages)](https://roxyxu151.github.io/daily-log/)**
 
@@ -117,4 +117,4 @@ go -C desktop vet ./... && go -C desktop test ./...
 go run ./cmd/build-release
 ```
 
-欢迎提交 Issue 或 Pull Request，参与前请阅读 [贡献指南](CONTRIBUTING.md) 与 [安全策略](SECURITY.md)。本项目基于 [MIT License](LICENSE) 开源。
+欢迎提交 Issue 或 Pull Request，参与前请阅读 [贡献指南](CONTRIBUTING.md) 与 [安全策略](SECURITY.md)。本项目基于 [Apache License 2.0](LICENSE) 开源。
