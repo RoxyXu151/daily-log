@@ -206,7 +206,11 @@ func run() error {
 		}
 	}
 	if *desktop {
-		if err = command(filepath.Join(staged, "desktop"), nil, "mygo", "build", "-skip-installer", "-platform", "web,linux/amd64,windows/amd64"); err != nil {
+		mygoArgs := []string{"build", "-platform", "web,linux/amd64,windows/amd64"}
+		if _, lookErr := exec.LookPath("makensis"); lookErr != nil {
+			mygoArgs = []string{"build", "-skip-installer", "-platform", "web,linux/amd64,windows/amd64"}
+		}
+		if err = command(filepath.Join(staged, "desktop"), nil, "mygo", mygoArgs...); err != nil {
 			return err
 		}
 		for _, platform := range []string{"linux", "windows"} {
@@ -252,7 +256,19 @@ func run() error {
 			}
 			var included []string
 			for _, f := range files {
-				if !strings.HasPrefix(f, ".") && !strings.HasSuffix(f, ".deb") && !strings.HasSuffix(f, ".tar.gz") {
+				isInstaller := strings.HasSuffix(f, ".deb") || strings.HasSuffix(f, ".tar.gz") ||
+					(strings.Contains(f, "-setup-") && strings.HasSuffix(f, ".exe"))
+				if isInstaller {
+					data, err := os.ReadFile(filepath.Join(bundle, f))
+					if err != nil {
+						return err
+					}
+					if err = os.WriteFile(filepath.Join(destination, filepath.Base(f)), data, 0644); err != nil {
+						return err
+					}
+					continue
+				}
+				if !strings.HasPrefix(f, ".") {
 					included = append(included, f)
 				}
 			}

@@ -18,16 +18,30 @@ jobs:
       - name: Setup Go
         uses: actions/setup-go@v6
         with:
-          go-version-file: go.mod
+          go-version-file: desktop/go.mod
+          cache-dependency-path: |
+            go.sum
+            desktop/go.sum
 
-      - name: Build verified public release bundles
-        run: go run ./cmd/build-release --output dist/public
+      - name: Install packaging tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y nsis
+          go install github.com/egoist/mygo/cmd/mygo@v0.8.3
+
+      - name: Build verified public release bundles and installers
+        run: go run ./cmd/build-release --desktop --output dist/public
 
       - name: Publish GitHub Release
         uses: softprops/action-gh-release@v2
         with:
           generate_release_notes: true
           files: |
-            dist/public/daily-log-cli-linux-amd64.zip
+            dist/public/daily-log-setup-*-amd64.exe
+            dist/public/daily-log_*_amd64.deb
+            dist/public/daily-log-*-linux-amd64.tar.gz
+            dist/public/daily-log-windows-amd64.zip
+            dist/public/daily-log-linux-amd64.zip
             dist/public/daily-log-cli-windows-amd64.zip
+            dist/public/daily-log-cli-linux-amd64.zip
             dist/public/personal-daily-log-source.zip
